@@ -1,0 +1,10 @@
+
+    --- Simulation Summary ---
+    Case Name: OBJECTIVES1_TEST01_1DMG_CSTest03
+    Simulation Type: forward Simulation
+    Number of groups: 2
+    Dimensions: 1D
+    Final keff: 1.002132
+    Elapsed Time: 8.358e-01 seconds
+    Solver Used: Sparse Direct Solver
+    

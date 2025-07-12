@@ -21,39 +21,9 @@ from SOLVERFACTORY import SolverFactory
 original_sys_path = sys.path.copy()
 sys.path.append('../')
 
-#from INPUTS.TASK1_TEST01_1D1G_general import *
-#from INPUTS.TASK1_TEST02_1DMG_CSTest03 import *
-#from INPUTS.TASK1_TEST03_1DMG_CSTest05 import *
-#from INPUTS.TASK1_TEST04_1DMG_CSTest07 import * # No noise case
-
-#from INPUTS.TASK1_TEST05_2DMG_Serp289_2g import * # No noise case
-#from INPUTS.TASK1_TEST06_2DMG_CSTest10_VandV import *
-#from INPUTS.TASK1_TEST07_2DMG_C3_VandV import *
-#from INPUTS.TASK1_TEST08_2DMG_BIBLIS_VandV import * # No noise case
-#from INPUTS.TASK1_TEST09_2DMG_PWRMOX_VandV import *
-
-#from INPUTS.TASK1_TEST10_3DMG_CSTest02_VandV import * # No noise case
-#from INPUTS.TASK1_TEST11_3DMG_CSTest08_VandV import * # Forward only
-#from INPUTS.TASK1_TEST12_3DMG_CSTest09_VandV import * # Forward only
-#from INPUTS.TASK1_TEST13_3DMG_PWRMOX import *
-#from INPUTS.TASK1_TEST14_3DMG_PWRMOX1 import *
-
-#from INPUTS.TASK1_TEST15_2DTriMG_3ring import * # No noise case
-#from INPUTS.TASK1_TEST16_2DTriMG_HOMOG_VandV import *
-#from INPUTS.TASK1_TEST17_2DTriMG_VVER400_VandV import * # No noise case
-#from INPUTS.TASK1_TEST18_2DTriMG_HTTR2G_VandV import *
-#from INPUTS.TASK1_TEST19_2DTriMG_HTTR4G import * # No noise case
-#from INPUTS.TASK1_TEST20_2DTriMG_HTTR7G import * # No noise case
-#from INPUTS.TASK1_TEST21_2DTriMG_HTTR14G import * # No noise case
-
-#from INPUTS.TASK1_TEST22_3DTriMG_3rings import * # No noise case
-#from INPUTS.TASK1_TEST23_3DTriMG_VVER400_VandV import * # No noise case
-#from INPUTS.TASK1_TEST24_3DTriMG_HTTR import *
-#from INPUTS.TASK3_TEST05d_3DTriMG_HTTR_LVL2_FAV import *
-
-#from INPUTS.OBJECTIVES1_TEST01_1DMG_CSTest03 import *
+from INPUTS.OBJECTIVES1_TEST01_1DMG_CSTest03 import *
 #from INPUTS.OBJECTIVES1_TEST02_2DMG_C3_VandV import *
-from INPUTS.OBJECTIVES1_TEST03_2DMG_BIBLIS_VandV import *
+#from INPUTS.OBJECTIVES1_TEST03_2DMG_BIBLIS_VandV import *
 #from INPUTS.OBJECTIVES1_TEST04_2DTriMG_HOMOG_VandV import *
 #from INPUTS.OBJECTIVES1_TEST05_2DTriMG_VVER400_VandV import *
 #from INPUTS.OBJECTIVES1_TEST06_3DMG_CSTest09_VandV_new import *
@@ -72,8 +42,8 @@ from INPUTS.OBJECTIVES1_TEST03_2DMG_BIBLIS_VandV import *
 sys.path = original_sys_path
 
 #######################################################################################################
-#solver_type = 'forward'
-solver_type = 'adjoint'
+solver_type = 'forward'
+#solver_type = 'adjoint'
 #solver_type = 'noise'
 
 #######################################################################################################
