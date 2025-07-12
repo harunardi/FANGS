@@ -1,15 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.sparse import lil_matrix, csc_matrix
+from scipy.sparse import lil_matrix
 import os
 import h5py
 import sys
-from scipy.interpolate import griddata
-from scipy.interpolate import RBFInterpolator
-from matplotlib.colors import Normalize
-from matplotlib import cm
-from PIL import Image
-from scipy.spatial.distance import pdist, squareform
 
 # Prevent .pyc file generation
 os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
@@ -820,70 +814,3 @@ def plot_heatmap_3D_general(data, g, z, x, y, cmap='viridis', title=None, output
     plt.close()
 
     return filename
-
-##############################################################################
-def interpolate_dPHI_rbf_3D_rect(dPHI_zero, group, K_max, J_max, I_max, conv, known_coords, zero_coords, epsilon, rbf_function=None):
-    if len(dPHI_zero) == group * max(conv):
-        dPHI_zero_new = np.zeros((group * K_max * J_max * I_max), dtype=complex)
-        for g in range(group):
-            for n in range(K_max * J_max * I_max):
-                if conv[n] != 0:
-                    dPHI_zero_new[g * (K_max * J_max * I_max) + n] = dPHI_zero[g * max(conv) + (conv[n] - 1)]
-    else:
-        dPHI_zero_new = dPHI_zero
-
-    dPHI_zero_array = np.reshape(np.array(dPHI_zero_new), (group, K_max, J_max, I_max))
-    dPHI_interp_array = dPHI_zero_array.copy()
-
-    for g in range(group):
-        dPHI_zero_array_real = np.real(dPHI_zero_array[g])
-        dPHI_zero_array_imag = np.imag(dPHI_zero_array[g])
-
-        values_real = np.array([dPHI_zero_array_real[k, j, i] for k, j, i in known_coords])
-        values_imag = np.array([dPHI_zero_array_imag[k, j, i] for k, j, i in known_coords])
-
-        # Create RBF interpolator and interpolate for zero elements
-        rbf_real = RBFInterpolator(known_coords, values_real, epsilon=epsilon, kernel=rbf_function)
-        rbf_imag = RBFInterpolator(known_coords, values_imag, epsilon=epsilon, kernel=rbf_function)
-
-        # Interpolate real and imaginary parts separately only for zero locations
-        interpolated_real = rbf_real(zero_coords)
-        interpolated_imag = rbf_imag(zero_coords)
-
-        # Handle NaN values in interpolated data by filling with nearest interpolation
-        if np.any(np.isnan(interpolated_real)):
-            interpolated_real[np.isnan(interpolated_real)] = griddata(
-                known_coords, values_real, zero_coords[np.isnan(interpolated_real)], method='linear'
-            )
-        if np.any(np.isnan(interpolated_imag)):
-            interpolated_imag[np.isnan(interpolated_imag)] = griddata(
-                known_coords, values_imag, zero_coords[np.isnan(interpolated_imag)], method='linear'
-            )
-
-        # Assign interpolated values back to the array
-        for idx, (k, j, i) in enumerate(zero_coords):
-            dPHI_interp_array[g, k, j, i] = interpolated_real[idx] + 1j * interpolated_imag[idx]
-
-    # Convert the 4D array back to a 1D list
-    dPHI_interp = dPHI_interp_array.ravel().tolist()
-
-    # Apply conv-based NaN and zero conditions on dPHI_interp
-    for g in range(group):
-        start_idx = g * K_max * J_max * I_max
-        for n in range(K_max * J_max * I_max):
-            global_idx = start_idx + n
-            if conv[n] == 0:
-                dPHI_interp[global_idx] = np.nan
-            elif conv[n] > 0 and np.isnan(dPHI_interp[global_idx]):
-                dPHI_interp[global_idx] = 0
-
-    if len(dPHI_zero) == group * max(conv):
-        dPHI_interp_new = np.zeros((group * max(conv)), dtype=complex)
-        for g in range(group):
-            for n in range(K_max * J_max * I_max):
-                if conv[n] != 0:
-                    dPHI_interp_new[g * max(conv) + (conv[n] - 1)] = dPHI_interp[g * (K_max * J_max * I_max) + n]
-    else:
-        dPHI_interp_new = dPHI_interp
-
-    return dPHI_interp_new

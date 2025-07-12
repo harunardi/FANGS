@@ -3,7 +3,6 @@ from scipy.sparse import lil_matrix
 import os
 import sys
 import h5py
-from scipy.interpolate import RBFInterpolator, griddata
 
 # Prevent .pyc file generation
 os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
@@ -333,75 +332,3 @@ def NOISE_dNUFIS_1D_matrix(group, N, chi_p, chi_d, dNUFIS, k_complex, Beff, keff
                 matrix[i*N + k, j*N + k] += (chi_p[i][k] * (1-Beff)/keff + chi_d[i][k] * k_complex) * dNUFIS[j][k]
 
     return matrix
-
-###################################################################################################
-def interpolate_dPHI_rbf_1D(dPHI_zero, group, N, map_detector, rbf_function=None):
-    """
-    Interpolate dPHI values in 1D using RBF interpolation.
-
-    Parameters:
-        dPHI_zero (array): Input complex array with zeroed elements.
-        group (int): Number of energy groups.
-        N_max (int): Total number of elements in the 1D grid.
-        conv (array): Conversion array mapping indices.
-        map_detector (array): Binary array indicating detector positions.
-        rbf_function (str): RBF kernel function (e.g., 'multiquadric', 'gaussian').
-
-    Returns:
-        dPHI_interp_new (array): Interpolated complex array.
-    """
-    # Reshape the input into a 2D array of shape (group, N_max)
-    dPHI_zero_array = np.reshape(np.array(dPHI_zero), (group, N))
-    dPHI_interp_array = dPHI_zero_array.copy()
-
-    for g in range(group):
-        dPHI_zero_real = np.real(dPHI_zero_array[g])
-        dPHI_zero_imag = np.imag(dPHI_zero_array[g])
-
-        # Get non-zero coordinates and values for real and imaginary parts
-        coords_real = np.array([n for n in range(N) if map_detector[n] == 1]).reshape(-1, 1)
-        values_real = np.array([dPHI_zero_real[n] for n in coords_real.flatten()])
-        coords_imag = coords_real  # Same coordinates for real and imaginary parts
-        values_imag = np.array([dPHI_zero_imag[n] for n in coords_imag.flatten()])
-
-        # Calculate epsilon based on the pairwise distances
-        pairwise_distances = np.diff(coords_real.flatten())
-        avg_distance = np.mean(pairwise_distances)
-        epsilon = avg_distance / (32 * np.max(values_real))
-        
-        # Create RBF interpolators
-        rbf_real = RBFInterpolator(coords_real, values_real, epsilon=epsilon, kernel=rbf_function)
-        rbf_imag = RBFInterpolator(coords_imag, values_imag, epsilon=epsilon, kernel=rbf_function)
-
-        # Interpolate for zero elements
-        zero_coords = np.array([n for n in range(N) if map_detector[n] == 0]).reshape(-1, 1)
-        interpolated_real = rbf_real(zero_coords)
-        interpolated_imag = rbf_imag(zero_coords)
-
-        # Handle NaN values using nearest interpolation
-        if np.any(np.isnan(interpolated_real)):
-            interpolated_real[np.isnan(interpolated_real)] = griddata(
-                coords_real.flatten(), values_real, zero_coords[np.isnan(interpolated_real)], method='nearest'
-            )
-        if np.any(np.isnan(interpolated_imag)):
-            interpolated_imag[np.isnan(interpolated_imag)] = griddata(
-                coords_imag.flatten(), values_imag, zero_coords[np.isnan(interpolated_imag)], method='nearest'
-            )
-
-        # Assign interpolated values back to the array
-        for idx, n in enumerate(zero_coords.flatten()):
-            dPHI_interp_array[g, n] = interpolated_real[idx] + 1j * interpolated_imag[idx]
-
-    # Flatten the array back to list
-    dPHI_interp = dPHI_interp_array.tolist()
-
-    # Convert back to compact representation if necessary
-    if len(dPHI_zero) == group * N:
-        dPHI_interp_new = np.zeros((group * N), dtype=complex)
-        for g in range(group):
-            for n in range(N):
-                dPHI_interp_new[g * N + n] = dPHI_interp[g][n]
-    else:
-        dPHI_interp_new = dPHI_interp
-
-    return dPHI_interp_new

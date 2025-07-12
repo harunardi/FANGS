@@ -1,22 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.sparse import lil_matrix, csc_matrix
+from scipy.sparse import lil_matrix
 import os
 import sys
 import h5py
-from scipy.interpolate import RBFInterpolator
-from scipy.interpolate import griddata
 
 # Prevent .pyc file generation
 os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
 sys.dont_write_bytecode = True
-
-#from SRC_ALL.CONVERT_TRI_NEIGHBOR_3D import *
-
-#from SRC_ALL.CONVERT_TRI_NEIGHBOR_3D_level1 import *
-#from SRC_ALL.CONVERT_TRI_NEIGHBOR_3D_level2 import *
-#from SRC_ALL.CONVERT_TRI_NEIGHBOR_3D_level3 import *
-#from SRC_ALL.CONVERT_TRI_NEIGHBOR_3D_level4 import *
 
 ##############################################################################
 # Function to save sparse matrix to file
@@ -1041,43 +1032,3 @@ def XS3D_FAV(level, group, K_max, J_max, I_max, dTOT, dNUFIS, fav_strength, diff
                         dNUFIS_hexx[g][(m-1) * p + (northeast_hexx_boundary[t_idx])] = fav_strength * diff_X_NUFIS[g][5]
 
     return dTOT_hexx, dNUFIS_hexx
-
-def interpolate_3D_hexx_rbf(dPHI_zero, group, K_max, conv_tri, known_coords, known_values_group, zero_coords, all_triangles, zero_coord_to_index):
-    if len(dPHI_zero) == group * max(conv_tri):
-        dPHI_zero_new = np.reshape(dPHI_zero, (group, K_max, len(all_triangles)))
-    else:
-        dPHI_zero_new = dPHI_zero
-    dPHI_interp = dPHI_zero_new.copy()
-
-    for g in range(group):
-        for k in range(K_max):
-#            print(np.array(known_coords[k]).shape)
-#            print(np.array(known_values_group[g][k]).shape)
-#            print(np.array(zero_coords[k]).shape)
-            PHIg_temp = np.zeros(len(all_triangles), dtype=complex)
-            if zero_coords:
-                try:
-                    rbf_interpolator = RBFInterpolator(known_coords[k], known_values_group[g][k], kernel='thin_plate_spline')
-                    interpolated_values = rbf_interpolator(zero_coords[k])
-
-                    # Use precomputed mapping instead of recalculating centroids
-                    for coord, value in zip(zero_coords[k], interpolated_values):
-                        if coord in zero_coord_to_index:
-                            PHIg_temp[zero_coord_to_index[coord]] = value
-                except Exception as e:
-                    print(f"RBF Interpolation failed for group {g}: {e}")
-                    continue
-
-            dPHI_interp[g][k] = PHIg_temp
-
-    # Step 4: Reformat results if needed
-    if len(dPHI_zero) == group * max(conv_tri):
-        dPHI_interp_new = np.zeros((group * K_max * len(all_triangles)), dtype=complex)
-        for g in range(group):
-            for k in range(K_max):
-                for n in range(len(all_triangles)):
-                    dPHI_interp_new[g * max(conv_tri) + k * len(all_triangles) + n] = dPHI_interp[g][k][n]
-    else:
-        dPHI_interp_new = dPHI_interp
-
-    return dPHI_interp_new

@@ -4,8 +4,6 @@ from scipy.sparse import lil_matrix
 import os
 import h5py
 import sys
-from scipy.interpolate import RBFInterpolator
-from scipy.interpolate import griddata
 
 # Prevent .pyc file generation
 os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
@@ -907,39 +905,3 @@ def XS2D_FAV(level, group, J_max, I_max, dTOT, dNUFIS, fav_strength, diff_X_ABS,
                         dNUFIS_hexx[g][(m-1) * p + (northeast_hexx_boundary[t_idx])] = fav_strength * diff_X_NUFIS[g][5]
 
     return dTOT_hexx, dNUFIS_hexx
-
-##############################################################################
-def interpolate_2D_hexx_rbf(dPHI_zero, group, conv_tri, known_coords, known_values_group, zero_coords, all_triangles, zero_coord_to_index):
-    if len(dPHI_zero) == group * max(conv_tri):
-        dPHI_zero_new = np.reshape(dPHI_zero, (group, max(conv_tri)))
-    else:
-        dPHI_zero_new = dPHI_zero
-    dPHI_interp = dPHI_zero_new.copy()
-
-    for g in range(group):
-        PHIg_temp = np.zeros(max(conv_tri), dtype=complex)
-        if zero_coords:
-            try:
-                rbf_interpolator = RBFInterpolator(known_coords, known_values_group[g], kernel='thin_plate_spline')
-                interpolated_values = rbf_interpolator(zero_coords)
-
-                # Use precomputed mapping instead of recalculating centroids
-                for coord, value in zip(zero_coords, interpolated_values):
-                    if coord in zero_coord_to_index:
-                        PHIg_temp[zero_coord_to_index[coord]] = value
-            except Exception as e:
-                print(f"RBF Interpolation failed for group {g}: {e}")
-                continue
-
-        dPHI_interp[g] = PHIg_temp
-
-    # Step 4: Reformat results if needed
-    if len(dPHI_zero) == group * max(conv_tri):
-        dPHI_interp_new = np.zeros((group * max(conv_tri)), dtype=complex)
-        for g in range(group):
-            for n in range(max(conv_tri)):
-                dPHI_interp_new[g * max(conv_tri) + n] = dPHI_interp[g][n]
-    else:
-        dPHI_interp_new = dPHI_interp
-
-    return dPHI_interp_new
