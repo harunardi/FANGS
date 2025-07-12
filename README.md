@@ -1,2 +1,2 @@
 # FANGS
-Forward, Adjoint, and Noise Multigroup Solver (FANGS)
+Forward, Adjoint, and Noise General Solver (FANGS)
